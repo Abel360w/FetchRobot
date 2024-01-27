@@ -2,7 +2,7 @@
 
 **---(Disclaimer Always Give Credit To Me If You Use This Code Or Any Of Its Content)---💙**
  
-YouTube Download Bot🚀🎬⬇️
+Video Downloader Bot🚀🎬⬇️
 
 This Telegram bot allows you to download videos from YouTube and other supported websites, including FaceBook!
 
