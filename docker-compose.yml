@@ -1,0 +1,62 @@
+version: '3.1'
+
+services:
+  socat:
+    image: bennythink/socat
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: [ "socat", "tcp-listen:2375,fork,reuseaddr","unix-connect:/var/run/docker.sock" ]
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    logging:
+      driver: none
+
+  mysql:
+    image: ubuntu/mysql:8.0-22.04_beta
+    restart: always
+    volumes:
+      - ./db_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 'root'
+    command: --default-authentication-plugin=mysql_native_password
+    logging:
+      driver: none
+
+  ytdl:
+    image: bennythink/ytdlbot
+    env_file:
+      - env/ytdl.env
+    restart: always
+    depends_on:
+      - socat
+      - redis
+    volumes:
+      - ./data/vnstat/:/var/lib/vnstat/
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  flower:
+    image: bennythink/ytdlbot
+    env_file:
+      - env/ytdl.env
+    restart: unless-stopped
+    command: [ "/usr/local/bin/celery",
+               "-A", "flower_tasks", "flower",
+               "--basic_auth=benny:123456",
+               "--address=0.0.0.0", "--persistent","--purge_offline_workers=3600" ]
+    volumes:
+      - ./data/flower:/ytdlbot/ytdlbot/flower
+    ports:
+      - "127.0.0.1:15555:5555"
+
+  premium:
+    image: bennythink/ytdlbot
+    env_file:
+      - env/ytdl.env
+    restart: always
+    volumes:
+      - ./data/premium.session:/ytdlbot/ytdlbot/premium.session
+    command: [ "/usr/local/bin/python",  "/ytdlbot/ytdlbot/premium.py" ]
